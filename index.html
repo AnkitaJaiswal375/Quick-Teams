@@ -230,219 +230,1037 @@
     </div>
 
     <script>
-        const { createApp } = Vue;
+        // ================================
+// SQL DATABASE SIMULATION CLASS
+// ================================
 
-        createApp({
-            data() {
+class SQLiteSimulator {
+    constructor() {
+        this.tables = {
+            users: [],
+            projects: [],
+            skills: [],
+            user_skills: [],
+            project_requirements: [],
+            team_selections: []
+        };
+        this.autoIncrement = {
+            users: 1,
+            projects: 1,
+            skills: 1,
+            user_skills: 1,
+            project_requirements: 1,
+            team_selections: 1
+        };
+        this.initializeDatabase();
+    }
+
+    // Initialize database with sample data
+    initializeDatabase() {
+        // Insert sample users
+        this.insert('users', {
+            name: 'Sarah Chen',
+            email: 'sarah@example.com',
+            password: 'password123',
+            role: 'Frontend Developer',
+            experience: 'Senior',
+            bio: 'Passionate frontend developer with 5+ years of experience building modern web applications.',
+            created_at: new Date().toISOString()
+        });
+
+        this.insert('users', {
+            name: 'Marcus Johnson',
+            email: 'marcus@example.com',
+            password: 'password123',
+            role: 'Backend Developer',
+            experience: 'Mid',
+            bio: 'Full-stack focused backend developer specializing in scalable API development.',
+            created_at: new Date().toISOString()
+        });
+
+        this.insert('users', {
+            name: 'Elena Rodriguez',
+            email: 'elena@example.com',
+            password: 'password123',
+            role: 'UI/UX Designer',
+            experience: 'Senior',
+            bio: 'Creative designer with a passion for crafting intuitive user experiences.',
+            created_at: new Date().toISOString()
+        });
+
+        this.insert('users', {
+            name: 'David Kim',
+            email: 'david@example.com',
+            password: 'password123',
+            role: 'Full Stack Developer',
+            experience: 'Senior',
+            bio: 'Experienced full-stack developer who enjoys building complete solutions.',
+            created_at: new Date().toISOString()
+        });
+
+        this.insert('users', {
+            name: 'Priya Patel',
+            email: 'priya@example.com',
+            password: 'password123',
+            role: 'Data Scientist',
+            experience: 'Mid',
+            bio: 'Data scientist passionate about extracting insights from complex datasets.',
+            created_at: new Date().toISOString()
+        });
+
+        this.insert('users', {
+            name: 'Alex Turner',
+            email: 'alex@example.com',
+            password: 'password123',
+            role: 'DevOps Engineer',
+            experience: 'Senior',
+            bio: 'DevOps engineer focused on automating deployment pipelines.',
+            created_at: new Date().toISOString()
+        });
+
+        // Insert sample skills
+        const skillsData = [
+            'JavaScript', 'React', 'Vue.js', 'Node.js', 'Python', 'Java', 'C++',
+            'HTML', 'CSS', 'TypeScript', 'Angular', 'Express', 'MongoDB', 'PostgreSQL',
+            'MySQL', 'AWS', 'Docker', 'Kubernetes', 'Git', 'Figma', 'Adobe XD',
+            'Machine Learning', 'TensorFlow', 'Django', 'Flask', 'Spring Boot',
+            'GraphQL', 'Redis', 'Jenkins', 'Terraform', 'Photoshop', 'Sketch'
+        ];
+
+        skillsData.forEach(skill => {
+            this.insert('skills', { name: skill });
+        });
+
+        // Insert user skills relationships
+        const userSkillsData = [
+            { user_id: 1, skill_name: 'React', proficiency: 5 },
+            { user_id: 1, skill_name: 'Vue.js', proficiency: 5 },
+            { user_id: 1, skill_name: 'TypeScript', proficiency: 4 },
+            { user_id: 1, skill_name: 'JavaScript', proficiency: 5 },
+            { user_id: 1, skill_name: 'CSS', proficiency: 5 },
+            { user_id: 2, skill_name: 'Node.js', proficiency: 5 },
+            { user_id: 2, skill_name: 'Python', proficiency: 4 },
+            { user_id: 2, skill_name: 'MongoDB', proficiency: 4 },
+            { user_id: 2, skill_name: 'PostgreSQL', proficiency: 4 },
+            { user_id: 2, skill_name: 'AWS', proficiency: 3 },
+            { user_id: 3, skill_name: 'Figma', proficiency: 5 },
+            { user_id: 3, skill_name: 'Adobe XD', proficiency: 4 },
+            { user_id: 3, skill_name: 'Sketch', proficiency: 4 },
+            { user_id: 3, skill_name: 'HTML', proficiency: 4 },
+            { user_id: 4, skill_name: 'React', proficiency: 5 },
+            { user_id: 4, skill_name: 'Node.js', proficiency: 5 },
+            { user_id: 4, skill_name: 'Express', proficiency: 4 },
+            { user_id: 4, skill_name: 'MongoDB', proficiency: 4 },
+            { user_id: 4, skill_name: 'Docker', proficiency: 3 },
+            { user_id: 5, skill_name: 'Python', proficiency: 5 },
+            { user_id: 5, skill_name: 'Machine Learning', proficiency: 5 },
+            { user_id: 5, skill_name: 'TensorFlow', proficiency: 4 },
+            { user_id: 5, skill_name: 'PostgreSQL', proficiency: 3 },
+            { user_id: 6, skill_name: 'AWS', proficiency: 5 },
+            { user_id: 6, skill_name: 'Docker', proficiency: 5 },
+            { user_id: 6, skill_name: 'Kubernetes', proficiency: 4 },
+            { user_id: 6, skill_name: 'Jenkins', proficiency: 4 },
+            { user_id: 6, skill_name: 'Terraform', proficiency: 3 }
+        ];
+
+        userSkillsData.forEach(userSkill => {
+            this.insert('user_skills', userSkill);
+        });
+    }
+
+    // SQL-like INSERT operation
+    insert(tableName, data) {
+        if (!this.tables[tableName]) {
+            throw new Error(`Table ${tableName} does not exist`);
+        }
+        
+        const record = {
+            id: this.autoIncrement[tableName]++,
+            ...data
+        };
+        
+        this.tables[tableName].push(record);
+        return record;
+    }
+
+    // SQL-like SELECT operation
+    select(tableName, conditions = {}, options = {}) {
+        if (!this.tables[tableName]) {
+            throw new Error(`Table ${tableName} does not exist`);
+        }
+
+        let results = [...this.tables[tableName]];
+
+        // Apply WHERE conditions
+        if (Object.keys(conditions).length > 0) {
+            results = results.filter(record => {
+                return Object.entries(conditions).every(([key, value]) => {
+                    if (Array.isArray(value)) {
+                        return value.includes(record[key]);
+                    }
+                    return record[key] === value;
+                });
+            });
+        }
+
+        // Apply ORDER BY
+        if (options.orderBy) {
+            const [field, direction = 'ASC'] = options.orderBy.split(' ');
+            results.sort((a, b) => {
+                const aVal = a[field];
+                const bVal = b[field];
+                const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+                return direction.toLowerCase() === 'desc' ? -comparison : comparison;
+            });
+        }
+
+        // Apply LIMIT
+        if (options.limit) {
+            results = results.slice(0, options.limit);
+        }
+
+        return results;
+    }
+
+    // SQL-like UPDATE operation
+    update(tableName, data, conditions) {
+        if (!this.tables[tableName]) {
+            throw new Error(`Table ${tableName} does not exist`);
+        }
+
+        let updatedCount = 0;
+        this.tables[tableName].forEach(record => {
+            const matches = Object.entries(conditions).every(([key, value]) => record[key] === value);
+            if (matches) {
+                Object.assign(record, data);
+                updatedCount++;
+            }
+        });
+
+        return updatedCount;
+    }
+
+    // SQL-like DELETE operation
+    delete(tableName, conditions) {
+        if (!this.tables[tableName]) {
+            throw new Error(`Table ${tableName} does not exist`);
+        }
+
+        const initialLength = this.tables[tableName].length;
+        this.tables[tableName] = this.tables[tableName].filter(record => {
+            return !Object.entries(conditions).every(([key, value]) => record[key] === value);
+        });
+
+        return initialLength - this.tables[tableName].length;
+    }
+
+    // Complex JOIN operations
+    getUsersWithSkills() {
+        const users = this.select('users');
+        return users.map(user => {
+            const userSkills = this.select('user_skills', { user_id: user.id });
+            const skills = userSkills.map(us => ({
+                name: us.skill_name,
+                proficiency: us.proficiency
+            }));
+            return { ...user, skills };
+        });
+    }
+
+    // Get project requirements with skills
+    getProjectWithRequirements(projectId) {
+        const project = this.select('projects', { id: projectId })[0];
+        if (!project) return null;
+
+        const requirements = this.select('project_requirements', { project_id: projectId });
+        return { ...project, requirements };
+    }
+}
+
+// ================================
+// BACKEND API SIMULATION CLASS
+// ================================
+
+class TeamFinderAPI {
+    constructor() {
+        this.db = new SQLiteSimulator();
+        this.currentUser = null;
+        this.sessions = new Map();
+    }
+
+    // Authentication methods
+    async register(userData) {
+        try {
+            // Check if user already exists
+            const existingUser = this.db.select('users', { email: userData.email });
+            if (existingUser.length > 0) {
+                throw new Error('User with this email already exists');
+            }
+
+            // Create new user
+            const newUser = this.db.insert('users', {
+                name: userData.name,
+                email: userData.email,
+                password: userData.password, // In real app, hash this
+                role: userData.role,
+                experience: userData.experience,
+                bio: userData.bio,
+                created_at: new Date().toISOString()
+            });
+
+            // Add user skills
+            if (userData.skills && userData.skills.length > 0) {
+                userData.skills.forEach(skillName => {
+                    this.db.insert('user_skills', {
+                        user_id: newUser.id,
+                        skill_name: skillName,
+                        proficiency: 3 // Default proficiency
+                    });
+                });
+            }
+
+            // Create session
+            const sessionId = this.generateSessionId();
+            this.sessions.set(sessionId, newUser.id);
+
+            return {
+                success: true,
+                user: this.getUserProfile(newUser.id),
+                sessionId
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    async login(email, password) {
+        try {
+            const users = this.db.select('users', { email, password });
+            if (users.length === 0) {
+                throw new Error('Invalid credentials');
+            }
+
+            const user = users[0];
+            const sessionId = this.generateSessionId();
+            this.sessions.set(sessionId, user.id);
+
+            return {
+                success: true,
+                user: this.getUserProfile(user.id),
+                sessionId
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    logout(sessionId) {
+        this.sessions.delete(sessionId);
+        return { success: true };
+    }
+
+    // User profile methods
+    getUserProfile(userId) {
+        const user = this.db.select('users', { id: userId })[0];
+        if (!user) return null;
+
+        const userSkills = this.db.select('user_skills', { user_id: userId });
+        const skills = userSkills.map(us => us.skill_name);
+
+        return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            experience: user.experience,
+            bio: user.bio,
+            skills
+        };
+    }
+
+    async updateProfile(sessionId, profileData) {
+        const userId = this.sessions.get(sessionId);
+        if (!userId) {
+            return { success: false, error: 'Not authenticated' };
+        }
+
+        try {
+            // Update user data
+            this.db.update('users', {
+                name: profileData.name,
+                role: profileData.role,
+                experience: profileData.experience,
+                bio: profileData.bio
+            }, { id: userId });
+
+            // Update skills - remove old ones and add new ones
+            this.db.delete('user_skills', { user_id: userId });
+            if (profileData.skills) {
+                profileData.skills.forEach(skillName => {
+                    this.db.insert('user_skills', {
+                        user_id: userId,
+                        skill_name: skillName,
+                        proficiency: 3
+                    });
+                });
+            }
+
+            return {
+                success: true,
+                user: this.getUserProfile(userId)
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    // Project requirements methods
+    async saveProjectRequirements(sessionId, requirements) {
+        const userId = this.sessions.get(sessionId);
+        if (!userId) {
+            return { success: false, error: 'Not authenticated' };
+        }
+
+        try {
+            // Create or update project
+            const existingProject = this.db.select('projects', { user_id: userId });
+            let projectId;
+
+            if (existingProject.length > 0) {
+                projectId = existingProject[0].id;
+                this.db.update('projects', {
+                    project_type: requirements.projectType,
+                    duration: requirements.duration,
+                    description: requirements.description,
+                    updated_at: new Date().toISOString()
+                }, { id: projectId });
+
+                // Remove old requirements
+                this.db.delete('project_requirements', { project_id: projectId });
+            } else {
+                const newProject = this.db.insert('projects', {
+                    user_id: userId,
+                    project_type: requirements.projectType,
+                    duration: requirements.duration,
+                    description: requirements.description,
+                    created_at: new Date().toISOString()
+                });
+                projectId = newProject.id;
+            }
+
+            // Add new requirements
+            if (requirements.requiredSkills) {
+                requirements.requiredSkills.forEach(skill => {
+                    this.db.insert('project_requirements', {
+                        project_id: projectId,
+                        skill_name: skill.name,
+                        requirement_level: skill.level,
+                        weight: this.getSkillWeight(skill.level)
+                    });
+                });
+            }
+
+            return { success: true, projectId };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    // Team member search and ranking
+    async searchMembers(sessionId, filters = {}, sortBy = 'match') {
+        const userId = this.sessions.get(sessionId);
+        if (!userId) {
+            return { success: false, error: 'Not authenticated' };
+        }
+
+        try {
+            let members = this.db.getUsersWithSkills();
+            
+            // Exclude current user
+            members = members.filter(member => member.id !== userId);
+
+            // Apply role filter
+            if (filters.role) {
+                members = members.filter(member => member.role === filters.role);
+            }
+
+            // Apply skill filter
+            if (filters.skill) {
+                members = members.filter(member => 
+                    member.skills.some(skill => 
+                        skill.name.toLowerCase().includes(filters.skill.toLowerCase())
+                    )
+                );
+            }
+
+            // Calculate match scores
+            members = members.map(member => ({
+                ...member,
+                matchScore: this.calculateMatchScore(userId, member),
+                skillMatches: this.getSkillMatches(userId, member)
+            }));
+
+            // Sort members
+            this.sortMembers(members, sortBy);
+
+            return {
+                success: true,
+                members: members.map(member => ({
+                    id: member.id,
+                    name: member.name,
+                    role: member.role,
+                    experience: member.experience,
+                    bio: member.bio,
+                    skills: member.skills.map(s => s.name),
+                    matchScore: member.matchScore,
+                    skillMatches: member.skillMatches
+                }))
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    // Team selection methods
+    async selectTeamMember(sessionId, memberId) {
+        const userId = this.sessions.get(sessionId);
+        if (!userId) {
+            return { success: false, error: 'Not authenticated' };
+        }
+
+        try {
+            // Check if already selected
+            const existing = this.db.select('team_selections', {
+                user_id: userId,
+                selected_member_id: memberId
+            });
+
+            if (existing.length > 0) {
+                // Remove selection (deselect)
+                this.db.delete('team_selections', {
+                    user_id: userId,
+                    selected_member_id: memberId
+                });
+                return { success: true, action: 'deselected' };
+            } else {
+                // Add selection
+                this.db.insert('team_selections', {
+                    user_id: userId,
+                    selected_member_id: memberId,
+                    created_at: new Date().toISOString()
+                });
+                return { success: true, action: 'selected' };
+            }
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    async getSelectedTeam(sessionId) {
+        const userId = this.sessions.get(sessionId);
+        if (!userId) {
+            return { success: false, error: 'Not authenticated' };
+        }
+
+        try {
+            const selections = this.db.select('team_selections', { user_id: userId });
+            const teamMembers = selections.map(selection => {
+                const member = this.getUserProfile(selection.selected_member_id);
                 return {
-                    currentView: 'home',
-                    isLoggedIn: false,
-                    currentUser: null,
-                    editMode: false,
-                    newSkill: '',
-                    loginForm: {
-                        email: '',
-                        password: ''
-                    },
-                    signupForm: {
-                        name: '',
-                        email: '',
-                        password: '',
-                        role: '',
-                        skills: [],
-                        bio: ''
-                    },
-                    editForm: {
-                        name: '',
-                        role: '',
-                        skills: [],
-                        bio: ''
-                    },
-                    searchFilters: {
-                        role: '',
-                        skill: ''
-                    },
-                    // Sample users data - in a real app, this would come from a backend
-                    users: [
-                        {
-                            id: 1,
-                            name: 'Sarah Chen',
-                            email: 'sarah@example.com',
-                            role: 'Frontend Developer',
-                            skills: ['React', 'Vue.js', 'TypeScript', 'CSS3', 'JavaScript'],
-                            bio: 'Passionate frontend developer with 5+ years of experience building modern web applications. Love creating beautiful, user-friendly interfaces.'
-                        },
-                        {
-                            id: 2,
-                            name: 'Marcus Johnson',
-                            email: 'marcus@example.com',
-                            role: 'Backend Developer',
-                            skills: ['Node.js', 'Python', 'MongoDB', 'PostgreSQL', 'AWS'],
-                            bio: 'Full-stack focused backend developer specializing in scalable API development and cloud architecture.'
-                        },
-                        {
-                            id: 3,
-                            name: 'Elena Rodriguez',
-                            email: 'elena@example.com',
-                            role: 'UI/UX Designer',
-                            skills: ['Figma', 'Adobe XD', 'Sketch', 'Prototyping', 'User Research'],
-                            bio: 'Creative designer with a passion for crafting intuitive user experiences that solve real problems.'
-                        },
-                        {
-                            id: 4,
-                            name: 'David Kim',
-                            email: 'david@example.com',
-                            role: 'Full Stack Developer',
-                            skills: ['React', 'Node.js', 'Express', 'MongoDB', 'Docker'],
-                            bio: 'Experienced full-stack developer who enjoys building complete solutions from concept to deployment.'
-                        },
-                        {
-                            id: 5,
-                            name: 'Priya Patel',
-                            email: 'priya@example.com',
-                            role: 'Data Scientist',
-                            skills: ['Python', 'Machine Learning', 'TensorFlow', 'SQL', 'R'],
-                            bio: 'Data scientist passionate about extracting insights from complex datasets and building predictive models.'
-                        },
-                        {
-                            id: 6,
-                            name: 'Alex Turner',
-                            email: 'alex@example.com',
-                            role: 'DevOps Engineer',
-                            skills: ['AWS', 'Docker', 'Kubernetes', 'Jenkins', 'Terraform'],
-                            bio: 'DevOps engineer focused on automating deployment pipelines and maintaining reliable infrastructure.'
-                        }
-                    ]
-                }
+                    ...member,
+                    selectedAt: selection.created_at
+                };
+            });
+
+            return {
+                success: true,
+                team: teamMembers,
+                stats: this.calculateTeamStats(teamMembers)
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    // Helper methods
+    generateSessionId() {
+        return Math.random().toString(36).substring(2) + Date.now().toString(36);
+    }
+
+    getSkillWeight(level) {
+        const weights = {
+            'required': 10,
+            'preferred': 7,
+            'nice-to-have': 3
+        };
+        return weights[level] || 3;
+    }
+
+    calculateMatchScore(userId, member) {
+        // Get user's project requirements
+        const userProject = this.db.select('projects', { user_id: userId })[0];
+        if (!userProject) return 50; // Default score if no requirements
+
+        const requirements = this.db.select('project_requirements', { 
+            project_id: userProject.id 
+        });
+
+        if (requirements.length === 0) return 50;
+
+        let totalScore = 0;
+        let maxPossibleScore = 0;
+
+        requirements.forEach(req => {
+            const memberHasSkill = member.skills.some(skill => 
+                skill.name.toLowerCase() === req.skill_name.toLowerCase()
+            );
+
+            if (memberHasSkill) {
+                const memberSkill = member.skills.find(skill => 
+                    skill.name.toLowerCase() === req.skill_name.toLowerCase()
+                );
+                
+                // Score based on proficiency and requirement level
+                let skillScore = req.weight * (memberSkill.proficiency / 5);
+                
+                // Bonus for experience level matching
+                const experienceMultiplier = this.getExperienceMultiplier(
+                    member.experience, 
+                    req.requirement_level
+                );
+                skillScore *= experienceMultiplier;
+                
+                totalScore += skillScore;
+            }
+            
+            maxPossibleScore += req.weight * 1.2; // Max possible with experience bonus
+        });
+
+        return Math.round((totalScore / maxPossibleScore) * 100);
+    }
+
+    getExperienceMultiplier(memberExp, reqLevel) {
+        const expLevels = { 'Junior': 1, 'Mid': 2, 'Senior': 3 };
+        const reqImportance = { 'required': 1.2, 'preferred': 1.1, 'nice-to-have': 1.0 };
+        
+        const memberLevel = expLevels[memberExp] || 1;
+        const importance = reqImportance[reqLevel] || 1;
+        
+        return Math.min(memberLevel * importance, 1.2);
+    }
+
+    getSkillMatches(userId, member) {
+        const userProject = this.db.select('projects', { user_id: userId })[0];
+        if (!userProject) return [];
+
+        const requirements = this.db.select('project_requirements', { 
+            project_id: userProject.id 
+        });
+
+        return requirements.map(req => {
+            const memberSkill = member.skills.find(skill => 
+                skill.name.toLowerCase() === req.skill_name.toLowerCase()
+            );
+
+            return {
+                skillName: req.skill_name,
+                required: req.requirement_level,
+                memberHas: !!memberSkill,
+                proficiency: memberSkill ? memberSkill.proficiency : 0,
+                match: memberSkill ? 
+                    (memberSkill.proficiency >= 3 ? 'perfect' : 'partial') : 'missing'
+            };
+        });
+    }
+
+    sortMembers(members, sortBy) {
+        switch (sortBy) {
+            case 'match':
+                members.sort((a, b) => b.matchScore - a.matchScore);
+                break;
+            case 'experience':
+                const expOrder = { 'Senior': 3, 'Mid': 2, 'Junior': 1 };
+                members.sort((a, b) => expOrder[b.experience] - expOrder[a.experience]);
+                break;
+            case 'name':
+                members.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+        }
+    }
+
+    calculateTeamStats(teamMembers) {
+        const totalMembers = teamMembers.length;
+        const experienceLevels = {};
+        const allSkills = new Set();
+
+        teamMembers.forEach(member => {
+            experienceLevels[member.experience] = (experienceLevels[member.experience] || 0) + 1;
+            member.skills.forEach(skill => allSkills.add(skill));
+        });
+
+        return {
+            totalMembers,
+            uniqueSkills: allSkills.size,
+            experienceBreakdown: experienceLevels,
+            averageMatch: totalMembers > 0 ? 
+                teamMembers.reduce((sum, m) => sum + (m.matchScore || 0), 0) / totalMembers : 0
+        };
+    }
+}
+
+// ================================
+// VUE.JS APPLICATION
+// ================================
+
+const { createApp } = Vue;
+
+const app = createApp({
+    data() {
+        return {
+            // API instance
+            api: new TeamFinderAPI(),
+            sessionId: null,
+            
+            // Current state
+            currentView: 'home',
+            isLoggedIn: false,
+            currentUser: null,
+            editMode: false,
+            newSkill: '',
+            newRequiredSkill: '',
+            skillLevel: 'required',
+            
+            // Forms
+            loginForm: {
+                email: '',
+                password: ''
             },
-            computed: {
-                filteredMembers() {
-                    let filtered = this.users;
-                    
-                    // Exclude current user from search results
-                    if (this.isLoggedIn && this.currentUser) {
-                        filtered = filtered.filter(user => user.id !== this.currentUser.id);
-                    }
-                    
-                    if (this.searchFilters.role) {
-                        filtered = filtered.filter(user => 
-                            user.role === this.searchFilters.role
-                        );
-                    }
-                    
-                    if (this.searchFilters.skill) {
-                        filtered = filtered.filter(user => 
-                            user.skills.some(skill => 
-                                skill.toLowerCase().includes(this.searchFilters.skill.toLowerCase())
-                            )
-                        );
-                    }
-                    
-                    return filtered;
-                }
+            signupForm: {
+                name: '',
+                email: '',
+                password: '',
+                role: '',
+                experience: '',
+                skills: [],
+                bio: ''
             },
-            methods: {
-                login() {
-                    // Simple login simulation - in real app, validate with backend
-                    const user = this.users.find(u => u.email === this.loginForm.email);
-                    if (user) {
-                        this.currentUser = user;
-                        this.isLoggedIn = true;
-                        this.currentView = 'profile';
-                        this.loginForm = { email: '', password: '' };
-                    } else {
-                        alert('User not found. Try signing up first!');
-                    }
-                },
-                
-                signup() {
-                    // Create new user
-                    const newUser = {
-                        id: this.users.length + 1,
-                        name: this.signupForm.name,
-                        email: this.signupForm.email,
-                        role: this.signupForm.role,
-                        skills: [...this.signupForm.skills],
-                        bio: this.signupForm.bio
-                    };
-                    
-                    this.users.push(newUser);
-                    this.currentUser = newUser;
-                    this.isLoggedIn = true;
-                    this.currentView = 'profile';
-                    
-                    // Reset form
-                    this.signupForm = {
-                        name: '', email: '', password: '', role: '', skills: [], bio: ''
-                    };
-                },
-                
-                logout() {
-                    this.isLoggedIn = false;
-                    this.currentUser = null;
-                    this.currentView = 'home';
-                    this.editMode = false;
-                },
-                
-                addSkill() {
-                    if (this.newSkill.trim() && !this.signupForm.skills.includes(this.newSkill.trim())) {
-                        this.signupForm.skills.push(this.newSkill.trim());
-                        this.newSkill = '';
-                    }
-                    if (this.editMode && this.newSkill.trim() && !this.editForm.skills.includes(this.newSkill.trim())) {
-                        this.editForm.skills.push(this.newSkill.trim());
-                        this.newSkill = '';
-                    }
-                },
-                
-                removeSkill(skill) {
-                    this.signupForm.skills = this.signupForm.skills.filter(s => s !== skill);
-                },
-                
-                removeSkillEdit(skill) {
-                    this.editForm.skills = this.editForm.skills.filter(s => s !== skill);
-                },
-                
-                updateProfile() {
-                    // Update current user data
-                    this.currentUser.name = this.editForm.name;
-                    this.currentUser.role = this.editForm.role;
-                    this.currentUser.skills = [...this.editForm.skills];
-                    this.currentUser.bio = this.editForm.bio;
-                    
-                    // Update in users array
-                    const userIndex = this.users.findIndex(u => u.id === this.currentUser.id);
-                    if (userIndex !== -1) {
-                        this.users[userIndex] = { ...this.currentUser };
-                    }
-                    
-                    this.editMode = false;
-                },
-                
-                cancelEdit() {
-                    this.editMode = false;
-                    this.editForm = {
-                        name: this.currentUser.name,
-                        role: this.currentUser.role,
-                        skills: [...this.currentUser.skills],
-                        bio: this.currentUser.bio
-                    };
-                }
+            editForm: {
+                name: '',
+                role: '',
+                experience: '',
+                skills: [],
+                bio: ''
             },
             
-            watch: {
-                editMode(newVal) {
-                    if (newVal && this.currentUser) {
-                        this.editForm = {
-                            name: this.currentUser.name,
-                            role: this.currentUser.role,
-                            skills: [...this.currentUser.skills],
-                            bio: this.currentUser.bio
-                        };
-                    }
+            // Project requirements
+            projectRequirements: {
+                projectType: '',
+                duration: '',
+                description: '',
+                requiredSkills: []
+            },
+            
+            // Search and filtering
+            searchFilters: {
+                role: '',
+                skill: ''
+            },
+            sortBy: 'match',
+            members: [],
+            selectedTeamMembers: new Set(),
+            
+            // UI state
+            notification: {
+                show: false,
+                message: '',
+                type: 'info'
+            }
+        }
+    },
+
+    computed: {
+        filteredMembers() {
+            let filtered = this.members;
+
+            if (this.searchFilters.role) {
+                filtered = filtered.filter(member => member.role === this.searchFilters.role);
+            }
+
+            if (this.searchFilters.skill) {
+                filtered = filtered.filter(member =>
+                    member.skills.some(skill =>
+                        skill.toLowerCase().includes(this.searchFilters.skill.toLowerCase())
+                    )
+                );
+            }
+
+            return filtered;
+        }
+    },
+
+    methods: {
+        // Authentication methods
+        async login() {
+            const result = await this.api.login(this.loginForm.email, this.loginForm.password);
+            
+            if (result.success) {
+                this.sessionId = result.sessionId;
+                this.currentUser = result.user;
+                this.isLoggedIn = true;
+                this.currentView = 'profile';
+                this.loginForm = { email: '', password: '' };
+                this.showNotification('Welcome back!', 'success');
+            } else {
+                this.showNotification(result.error, 'error');
+            }
+        },
+
+        async signup() {
+            const result = await this.api.register(this.signupForm);
+            
+            if (result.success) {
+                this.sessionId = result.sessionId;
+                this.currentUser = result.user;
+                this.isLoggedIn = true;
+                this.currentView = 'profile';
+                this.signupForm = {
+                    name: '', email: '', password: '', role: '', 
+                    experience: '', skills: [], bio: ''
+                };
+                this.showNotification('Account created successfully!', 'success');
+            } else {
+                this.showNotification(result.error, 'error');
+            }
+        },
+
+        logout() {
+            if (this.sessionId) {
+                this.api.logout(this.sessionId);
+            }
+            
+            this.sessionId = null;
+            this.isLoggedIn = false;
+            this.currentUser = null;
+            this.currentView = 'home';
+            this.editMode = false;
+            this.selectedTeamMembers.clear();
+            this.showNotification('Logged out successfully', 'success');
+        },
+
+        // Profile management
+        async updateProfile() {
+            const result = await this.api.updateProfile(this.sessionId, this.editForm);
+            
+            if (result.success) {
+                this.currentUser = result.user;
+                this.editMode = false;
+                this.showNotification('Profile updated successfully!', 'success');
+            } else {
+                this.showNotification(result.error, 'error');
+            }
+        },
+
+        cancelEdit() {
+            this.editMode = false;
+            this.editForm = {
+                name: this.currentUser.name,
+                role: this.currentUser.role,
+                experience: this.currentUser.experience,
+                skills: [...this.currentUser.skills],
+                bio: this.currentUser.bio
+            };
+        },
+
+        // Skill management
+        addSkill() {
+            if (this.newSkill.trim() && !this.signupForm.skills.includes(this.newSkill.trim())) {
+                this.signupForm.skills.push(this.newSkill.trim());
+                this.newSkill = '';
+            }
+        },
+
+        addSkillEdit() {
+            if (this.newSkill.trim() && !this.editForm.skills.includes(this.newSkill.trim())) {
+                this.editForm.skills.push(this.newSkill.trim());
+                this.newSkill = '';
+            }
+        },
+
+        removeSkill(skill) {
+            this.signupForm.skills = this.signupForm.skills.filter(s => s !== skill);
+        },
+
+        removeSkillEdit(skill) {
+            this.editForm.skills = this.editForm.skills.filter(s => s !== skill);
+        },
+
+        // Project requirements
+        addRequiredSkill() {
+            if (this.newRequiredSkill.trim()) {
+                const exists = this.projectRequirements.requiredSkills.find(
+                    skill => skill.name.toLowerCase() === this.newRequiredSkill.trim().toLowerCase()
+                );
+                
+                if (!exists) {
+                    this.projectRequirements.requiredSkills.push({
+                        name: this.newRequiredSkill.trim(),
+                        level: this.skillLevel
+                    });
+                    this.newRequiredSkill = '';
                 }
             }
-        }).mount('#app');
+        },
+
+        removeRequiredSkill(skillName) {
+            this.projectRequirements.requiredSkills = 
+                this.projectRequirements.requiredSkills.filter(skill => skill.name !== skillName);
+        },
+
+        async saveRequirements() {
+            const result = await this.api.saveProjectRequirements(this.sessionId, this.projectRequirements);
+            
+            if (result.success) {
+                this.showNotification('Requirements saved successfully!', 'success');
+                this.currentView = 'search';
+                this.searchMembers();
+            } else {
+                this.showNotification(result.error, 'error');
+            }
+        },
+
+        // Team member search
+        async searchMembers() {
+            const result = await this.api.searchMembers(this.sessionId, this.searchFilters, this.sortBy);
+            
+            if (result.success) {
+                this.members = result.members;
+                // Get current team selections
+                const teamResult = await this.api.getSelectedTeam(this.sessionId);
+                if (teamResult.success) {
+                    this.selectedTeamMembers.clear();
+                    teamResult.team.forEach(member => {
+                        this.selectedTeamMembers.add(member.id);
+                    });
+                }
+            } else {
+                this.showNotification(result.error, 'error');
+            }
+        },
+
+        // Team member selection
+        async selectMember(memberId) {
+            const result = await this.api.selectTeamMember(this.sessionId, memberId);
+            
+            if (result.success) {
+                if (result.action === 'selected') {
+                    this.selectedTeamMembers.add(memberId);
+                    this.showNotification('Team member selected!', 'success');
+                } else {
+                    this.selectedTeamMembers.delete(memberId);
+                    this.showNotification('Team member deselected!', 'info');
+                }
+            } else {
+                this.showNotification(result.error, 'error');
+            }
+        },
+
+        // Utility methods
+        getMatchScoreClass(score) {
+            if (score >= 80) return 'high';
+            if (score >= 60) return 'medium';
+            return 'low';
+        },
+
+        formatMatchScore(score) {
+            return `${score}% Match`;
+        },
+
+        showNotification(message, type = 'info') {
+            this.notification.message = message;
+            this.notification.type = type;
+            this.notification.show = true;
+            
+            setTimeout(() => {
+                this.notification.show = false;
+            }, 4000);
+        }
+    },
+
+    watch: {
+        // Watch for changes in sort order and filters
+        sortBy() {
+            if (this.members.length > 0) {
+                this.searchMembers();
+            }
+        },
+
+        'searchFilters.role'() {
+            if (this.members.length > 0) {
+                this.searchMembers();
+            }
+        },
+
+        'searchFilters.skill'() {
+            // Debounced search for skill filter
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                if (this.members.length > 0) {
+                    this.searchMembers();
+                }
+            }, 500);
+        },
+
+        editMode(newVal) {
+            if (newVal && this.currentUser) {
+                this.editForm = {
+                    name: this.currentUser.name,
+                    role: this.currentUser.role,
+                    experience: this.currentUser.experience,
+                    skills: [...this.currentUser.skills],
+                    bio: this.currentUser.bio
+                };
+            }
+        }
+    },
+
+    mounted() {
+        // Initialize the application
+        console.log('Team Finder Application Initialized');
+        console.log('Database contains:', this.api.db.tables.users.length, 'users');
+        
+        // Load initial member data for non-logged-in users
+        if (this.currentView === 'search') {
+            this.searchMembers();
+        }
+    }
+});
+
+// Mount the Vue application
+app.mount('#app');
+
+
+        
     </script>
 </body>
 </html>
