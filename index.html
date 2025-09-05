@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechTeam Finder</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+     <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <div class="app-container">
+            <nav class="navbar">
+                <div class="logo">TechTeam Finder</div>
+                <div class="nav-buttons" v-if="currentView === 'home'">
+                    <button @click="currentView = 'login'">Login</button>
+                    <button @click="currentView = 'signup'">Sign Up</button>
+                </div>
+                <div class="nav-buttons" v-else-if="isLoggedIn">
+                    <button @click="currentView = 'profile'">Profile</button>
+                    <button @click="currentView = 'search'">Find Members</button>
+                    <button @click="logout">Logout</button>
+                </div>
+            </nav>
+
+            <main class="main-content">
+                <!-- Homepage -->
+                <div v-if="currentView === 'home'" class="homepage">
+                    <h1>Find Your Perfect Tech Team</h1>
+                    <p>Connect with skilled developers, designers, and tech professionals to build amazing projects together.</p>
+                    <div class="cta-buttons">
+                        <button @click="currentView = 'signup'">Join the Community</button>
+                        <button @click="currentView = 'search'">Explore Members</button>
+                    </div>
+                </div>
+
+                <!-- Login Form -->
+                <div v-if="currentView === 'login'" class="auth-form">
+                    <button class="back-btn" @click="currentView = 'home'">← Back</button>
+                    <h2>Welcome Back</h2>
+                    <form @submit.prevent="login">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" v-model="loginForm.email" placeholder="Enter your email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" v-model="loginForm.password" placeholder="Enter your password" required>
+                        </div>
+                        <button type="submit" class="submit-btn">Sign In</button>
+                    </form>
+                    <p style="text-align: center; margin-top: 1rem; opacity: 0.8;">
+                        Don't have an account? 
+                        <a href="#" @click="currentView = 'signup'" style="color: #4facfe;">Sign up here</a>
+                    </p>
+                </div>
+
+                <!-- Signup Form -->
+                <div v-if="currentView === 'signup'" class="auth-form">
+                    <button class="back-btn" @click="currentView = 'home'">← Back</button>
+                    <h2>Join TechTeam Finder</h2>
+                    <form @submit.prevent="signup">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" v-model="signupForm.name" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" v-model="signupForm.email" placeholder="Enter your email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" v-model="signupForm.password" placeholder="Create a password" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select v-model="signupForm.role" required>
+                                <option value="">Select your role</option>
+                                <option value="Frontend Developer">Frontend Developer</option>
+                                <option value="Backend Developer">Backend Developer</option>
+                                <option value="Full Stack Developer">Full Stack Developer</option>
+                                <option value="UI/UX Designer">UI/UX Designer</option>
+                                <option value="Data Scientist">Data Scientist</option>
+                                <option value="DevOps Engineer">DevOps Engineer</option>
+                                <option value="Product Manager">Product Manager</option>
+                                <option value="QA Engineer">QA Engineer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Skills</label>
+                            <input type="text" v-model="newSkill" @keyup.enter="addSkill" placeholder="Add a skill and press Enter">
+                            <div class="skills-container">
+                                <div v-for="skill in signupForm.skills" :key="skill" class="skill-tag">
+                                    {{ skill }}
+                                    <span class="remove-skill" @click="removeSkill(skill)">×</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Bio</label>
+                            <textarea v-model="signupForm.bio" placeholder="Tell us about yourself and your experience" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">Create Account</button>
+                    </form>
+                </div>
+
+                <!-- Profile View -->
+                <div v-if="currentView === 'profile' && isLoggedIn" class="profile-container">
+                    <button class="back-btn" @click="currentView = 'search'">← Back to Search</button>
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            {{ currentUser.name.charAt(0).toUpperCase() }}
+                        </div>
+                        <h2>{{ currentUser.name }}</h2>
+                        <p class="member-role">{{ currentUser.role }}</p>
+                    </div>
+                    
+                    <div class="profile-info" v-if="!editMode">
+                        <div class="info-group">
+                            <h3>Email</h3>
+                            <p>{{ currentUser.email }}</p>
+                        </div>
+                        <div class="info-group">
+                            <h3>Skills</h3>
+                            <div class="skills-container">
+                                <div v-for="skill in currentUser.skills" :key="skill" class="skill-tag">
+                                    {{ skill }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-group">
+                            <h3>Bio</h3>
+                            <p>{{ currentUser.bio || 'No bio available' }}</p>
+                        </div>
+                        <button class="edit-btn" @click="editMode = true">Edit Profile</button>
+                    </div>
+
+                    <div v-else>
+                        <form @submit.prevent="updateProfile">
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" v-model="editForm.name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Role</label>
+                                <select v-model="editForm.role" required>
+                                    <option value="Frontend Developer">Frontend Developer</option>
+                                    <option value="Backend Developer">Backend Developer</option>
+                                    <option value="Full Stack Developer">Full Stack Developer</option>
+                                    <option value="UI/UX Designer">UI/UX Designer</option>
+                                    <option value="Data Scientist">Data Scientist</option>
+                                    <option value="DevOps Engineer">DevOps Engineer</option>
+                                    <option value="Product Manager">Product Manager</option>
+                                    <option value="QA Engineer">QA Engineer</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Skills</label>
+                                <input type="text" v-model="newSkill" @keyup.enter="addSkill" placeholder="Add a skill and press Enter">
+                                <div class="skills-container">
+                                    <div v-for="skill in editForm.skills" :key="skill" class="skill-tag">
+                                        {{ skill }}
+                                        <span class="remove-skill" @click="removeSkillEdit(skill)">×</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Bio</label>
+                                <textarea v-model="editForm.bio" rows="3"></textarea>
+                            </div>
+                            <div style="display: flex; gap: 1rem;">
+                                <button type="submit" class="submit-btn" style="flex: 1;">Save Changes</button>
+                                <button type="button" class="back-btn" @click="cancelEdit" style="flex: 1;">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Search/Browse Members -->
+                <div v-if="currentView === 'search'" class="search-container">
+                    <button v-if="isLoggedIn" class="back-btn" @click="currentView = 'profile'">← Back to Profile</button>
+                    <h2 style="text-align: center; margin-bottom: 2rem;">Find Team Members</h2>
+                    
+                    <div class="search-filters">
+                        <div class="form-group">
+                            <label>Filter by Role</label>
+                            <select v-model="searchFilters.role">
+                                <option value="">All Roles</option>
+                                <option value="Frontend Developer">Frontend Developer</option>
+                                <option value="Backend Developer">Backend Developer</option>
+                                <option value="Full Stack Developer">Full Stack Developer</option>
+                                <option value="UI/UX Designer">UI/UX Designer</option>
+                                <option value="Data Scientist">Data Scientist</option>
+                                <option value="DevOps Engineer">DevOps Engineer</option>
+                                <option value="Product Manager">Product Manager</option>
+                                <option value="QA Engineer">QA Engineer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Filter by Skill</label>
+                            <input type="text" v-model="searchFilters.skill" placeholder="Enter a skill to search">
+                        </div>
+                    </div>
+
+                    <div class="team-members">
+                        <div v-for="member in filteredMembers" :key="member.id" class="member-card">
+                            <div class="member-name">{{ member.name }}</div>
+                            <div class="member-role">{{ member.role }}</div>
+                            <div class="skills-container">
+                                <div v-for="skill in member.skills.slice(0, 4)" :key="skill" class="skill-tag">
+                                    {{ skill }}
+                                </div>
+                                <div v-if="member.skills.length > 4" class="skill-tag">
+                                    +{{ member.skills.length - 4 }} more
+                                </div>
+                            </div>
+                            <p style="margin-top: 1rem; opacity: 0.8; font-size: 0.9rem;">
+                                {{ member.bio ? member.bio.substring(0, 100) + '...' : 'No bio available' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Floating Action Button -->
+            <button v-if="!isLoggedIn && currentView === 'search'" class="switch-view" @click="currentView = 'signup'">
+                Join Now
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    currentView: 'home',
+                    isLoggedIn: false,
+                    currentUser: null,
+                    editMode: false,
+                    newSkill: '',
+                    loginForm: {
+                        email: '',
+                        password: ''
+                    },
+                    signupForm: {
+                        name: '',
+                        email: '',
+                        password: '',
+                        role: '',
+                        skills: [],
+                        bio: ''
+                    },
+                    editForm: {
+                        name: '',
+                        role: '',
+                        skills: [],
+                        bio: ''
+                    },
+                    searchFilters: {
+                        role: '',
+                        skill: ''
+                    },
+                    // Sample users data - in a real app, this would come from a backend
+                    users: [
+                        {
+                            id: 1,
+                            name: 'Sarah Chen',
+                            email: 'sarah@example.com',
+                            role: 'Frontend Developer',
+                            skills: ['React', 'Vue.js', 'TypeScript', 'CSS3', 'JavaScript'],
+                            bio: 'Passionate frontend developer with 5+ years of experience building modern web applications. Love creating beautiful, user-friendly interfaces.'
+                        },
+                        {
+                            id: 2,
+                            name: 'Marcus Johnson',
+                            email: 'marcus@example.com',
+                            role: 'Backend Developer',
+                            skills: ['Node.js', 'Python', 'MongoDB', 'PostgreSQL', 'AWS'],
+                            bio: 'Full-stack focused backend developer specializing in scalable API development and cloud architecture.'
+                        },
+                        {
+                            id: 3,
+                            name: 'Elena Rodriguez',
+                            email: 'elena@example.com',
+                            role: 'UI/UX Designer',
+                            skills: ['Figma', 'Adobe XD', 'Sketch', 'Prototyping', 'User Research'],
+                            bio: 'Creative designer with a passion for crafting intuitive user experiences that solve real problems.'
+                        },
+                        {
+                            id: 4,
+                            name: 'David Kim',
+                            email: 'david@example.com',
+                            role: 'Full Stack Developer',
+                            skills: ['React', 'Node.js', 'Express', 'MongoDB', 'Docker'],
+                            bio: 'Experienced full-stack developer who enjoys building complete solutions from concept to deployment.'
+                        },
+                        {
+                            id: 5,
+                            name: 'Priya Patel',
+                            email: 'priya@example.com',
+                            role: 'Data Scientist',
+                            skills: ['Python', 'Machine Learning', 'TensorFlow', 'SQL', 'R'],
+                            bio: 'Data scientist passionate about extracting insights from complex datasets and building predictive models.'
+                        },
+                        {
+                            id: 6,
+                            name: 'Alex Turner',
+                            email: 'alex@example.com',
+                            role: 'DevOps Engineer',
+                            skills: ['AWS', 'Docker', 'Kubernetes', 'Jenkins', 'Terraform'],
+                            bio: 'DevOps engineer focused on automating deployment pipelines and maintaining reliable infrastructure.'
+                        }
+                    ]
+                }
+            },
+            computed: {
+                filteredMembers() {
+                    let filtered = this.users;
+                    
+                    // Exclude current user from search results
+                    if (this.isLoggedIn && this.currentUser) {
+                        filtered = filtered.filter(user => user.id !== this.currentUser.id);
+                    }
+                    
+                    if (this.searchFilters.role) {
+                        filtered = filtered.filter(user => 
+                            user.role === this.searchFilters.role
+                        );
+                    }
+                    
+                    if (this.searchFilters.skill) {
+                        filtered = filtered.filter(user => 
+                            user.skills.some(skill => 
+                                skill.toLowerCase().includes(this.searchFilters.skill.toLowerCase())
+                            )
+                        );
+                    }
+                    
+                    return filtered;
+                }
+            },
+            methods: {
+                login() {
+                    // Simple login simulation - in real app, validate with backend
+                    const user = this.users.find(u => u.email === this.loginForm.email);
+                    if (user) {
+                        this.currentUser = user;
+                        this.isLoggedIn = true;
+                        this.currentView = 'profile';
+                        this.loginForm = { email: '', password: '' };
+                    } else {
+                        alert('User not found. Try signing up first!');
+                    }
+                },
+                
+                signup() {
+                    // Create new user
+                    const newUser = {
+                        id: this.users.length + 1,
+                        name: this.signupForm.name,
+                        email: this.signupForm.email,
+                        role: this.signupForm.role,
+                        skills: [...this.signupForm.skills],
+                        bio: this.signupForm.bio
+                    };
+                    
+                    this.users.push(newUser);
+                    this.currentUser = newUser;
+                    this.isLoggedIn = true;
+                    this.currentView = 'profile';
+                    
+                    // Reset form
+                    this.signupForm = {
+                        name: '', email: '', password: '', role: '', skills: [], bio: ''
+                    };
+                },
+                
+                logout() {
+                    this.isLoggedIn = false;
+                    this.currentUser = null;
+                    this.currentView = 'home';
+                    this.editMode = false;
+                },
+                
+                addSkill() {
+                    if (this.newSkill.trim() && !this.signupForm.skills.includes(this.newSkill.trim())) {
+                        this.signupForm.skills.push(this.newSkill.trim());
+                        this.newSkill = '';
+                    }
+                    if (this.editMode && this.newSkill.trim() && !this.editForm.skills.includes(this.newSkill.trim())) {
+                        this.editForm.skills.push(this.newSkill.trim());
+                        this.newSkill = '';
+                    }
+                },
+                
+                removeSkill(skill) {
+                    this.signupForm.skills = this.signupForm.skills.filter(s => s !== skill);
+                },
+                
+                removeSkillEdit(skill) {
+                    this.editForm.skills = this.editForm.skills.filter(s => s !== skill);
+                },
+                
+                updateProfile() {
+                    // Update current user data
+                    this.currentUser.name = this.editForm.name;
+                    this.currentUser.role = this.editForm.role;
+                    this.currentUser.skills = [...this.editForm.skills];
+                    this.currentUser.bio = this.editForm.bio;
+                    
+                    // Update in users array
+                    const userIndex = this.users.findIndex(u => u.id === this.currentUser.id);
+                    if (userIndex !== -1) {
+                        this.users[userIndex] = { ...this.currentUser };
+                    }
+                    
+                    this.editMode = false;
+                },
+                
+                cancelEdit() {
+                    this.editMode = false;
+                    this.editForm = {
+                        name: this.currentUser.name,
+                        role: this.currentUser.role,
+                        skills: [...this.currentUser.skills],
+                        bio: this.currentUser.bio
+                    };
+                }
+            },
+            
+            watch: {
+                editMode(newVal) {
+                    if (newVal && this.currentUser) {
+                        this.editForm = {
+                            name: this.currentUser.name,
+                            role: this.currentUser.role,
+                            skills: [...this.currentUser.skills],
+                            bio: this.currentUser.bio
+                        };
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
